@@ -4,7 +4,7 @@ Heltec Wireless Tracker Case
 This project contains the top and bottom components for a Heltec Wireless Tracker Case.
 Both OpenSCAD and STL files are provided.
 
-Background for this project is in this blog posting: https://gorges.us/meshtastic-dog-tracker/
+Background for this project is in this blog posting: https://gorges.us/meshtastic-pet-tracker/
 
 Hopefully the variable names in the OpenSCAD file are clear enough so one can nake changes.
 For example change the $skin_thickness variable to make the case thicker, or the $case_height for a different LiPo battery size.
