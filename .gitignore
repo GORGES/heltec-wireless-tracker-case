@@ -1,1 +1,3 @@
 .idea
+*.gcode
+*2.scad

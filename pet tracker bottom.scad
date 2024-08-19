@@ -4,27 +4,30 @@
 // website: https://gorges.us
 // github: https://github.com/GORGES
 // license: Attribution-ShareAlike (mention author, keep license)
-// date: 8/14/2024
+// initial date: 8/14/2024
+// modified date: 8/18/2024
 
 // global settings
 
 $fs = 0.03;   // set to 0.01 for higher definition curves
 
-// variabldes
+// variables
 
 $skin_thickness = 1.4;
-$chip_height = 15.0;
-$chip_length = 66.2;
-$chip_width = 28.4;
-$antenna_offset = $chip_width / 2;
 $antenna_radius = 3.3;
 $antenna_rail = 5.0;
-$clasp_hole = 3.2;
+$chip_height = 15.0;
+$chip_length = 67.0;
+$chip_width = 28.4;
+$clasp_extra = 0.15;
+$clasp_offset = 2.5;
+$clasp_radius = 2.0;
+$clasp_screw = 0.7; // 0.1 less than top
 $extra = 2;
-$inside_radius = 2;
+$inside_radius = 1.0;
 $lip_height = 2.0;
 $lip_inset = $skin_thickness / 2;
-$outside_radius = 3;
+$outside_radius = 2.8;
 $rail_height = $chip_height - 1.2;
 $rail_thickness = 1.6;
 $strap_angle = 8;
@@ -118,42 +121,85 @@ union() {
                 ]);
             };
             union() {
-                // antenna
+                // chip cutout
+                translate([
+                    2 * $skin_thickness,
+                    $skin_thickness,
+                    $skin_thickness + $rail_height
+                ])
+                cube([
+                    $chip_length - 2 * $skin_thickness,
+                    $chip_width,
+                    $chip_height - $rail_height + $extra
+                ]);
+                // antenna hole
                 translate([
                     $chip_length - 2 * $extra,
-                    $skin_thickness + $antenna_offset,
+                    $skin_thickness + $chip_width / 2,
                     $skin_thickness + $rail_height / 2
                 ])
                 rotate([0, 90, 0])
                 cylinder(h = $skin_thickness + 6 * $extra, r = $antenna_radius);
-                // clasp holes
-                for (offset_x = [$chip_length / 3, 2 * $chip_length / 3]) {
+                // clasp end holes
+                for (offset_y = [$chip_width / 4, 3 * $chip_width / 4]) {
                     translate([
-                        $skin_thickness + offset_x - $clasp_hole / 2,
                         -$extra,
-                        $skin_thickness + $chip_height
+                        $skin_thickness + offset_y - $clasp_radius,
+                        $skin_thickness + $chip_height - $clasp_offset
                     ])
                     cube([
-                        $clasp_hole,
-                        2 * $skin_thickness + $chip_width + 2 * $extra,
-                        $lip_height / 2
+                        $skin_thickness + $extra + $clasp_extra,
+                        2 * $clasp_radius,
+                        $clasp_offset + $clasp_radius + $extra
                     ]);
+                    translate([
+                        -$extra,
+                        $skin_thickness + offset_y,
+                        $skin_thickness + $chip_height - $clasp_offset
+                    ])
+                    rotate([0, 90, 0])
+                    cylinder(h = 2 * $skin_thickness + 2 * $extra, r = $clasp_radius + $clasp_extra);
                 }
+                // clasp end hole
+                translate([
+                    $skin_thickness + $chip_length - $clasp_extra,
+                    $skin_thickness + $chip_width / 2 - $clasp_radius,
+                    $skin_thickness + $chip_height - $clasp_offset
+                ])
+                cube([
+                    $skin_thickness + $clasp_extra + $extra,
+                    2 * $clasp_radius,
+                    $clasp_offset + $clasp_radius + $extra
+                ]);
+                translate([
+                    $skin_thickness + $chip_length - $clasp_extra,
+                    $skin_thickness + $chip_width / 2,
+                    $skin_thickness + $chip_height - $clasp_offset
+                ])
+                rotate([0, 90, 0])
+                cylinder(h = $skin_thickness + $clasp_extra + 2 * $extra, r = $clasp_radius + $clasp_extra);
+                translate([
+                    $skin_thickness + $chip_length - $skin_thickness - $extra,
+                    $skin_thickness + $chip_width / 2,
+                    $skin_thickness + $chip_height - $clasp_offset
+                ])
+                rotate([0, 90, 0])
+                cylinder(h = $skin_thickness + 2 * $extra, r = $clasp_screw);
             }
         }
         union() {
             // center void
             translate([
-                $skin_thickness,
+                2 * $skin_thickness,
                 $skin_thickness,
                 $skin_thickness
             ])
             roundedcube(
                 size = [
-                    $chip_length,
+                    $chip_length - 2 * $skin_thickness,
                     $chip_width,
                     $skin_thickness + $chip_height + $lip_height + $extra],
-                radius = $inside_radius
+                radius = $inside_radius,
             );
             // usb port
             translate([
@@ -207,37 +253,41 @@ union() {
             [2 * $rail_thickness, 0],
             [0, -$rail_thickness]
         ]);
-        // antenna rails
-        translate([
-            $skin_thickness + $chip_length - $antenna_rail,
-            $antenna_offset - $antenna_radius,
-            $skin_thickness
-        ])
-        cube([
-            $antenna_rail,
-            $skin_thickness,
-            $rail_height / 2 + $antenna_radius
-        ]);
-        translate([
-            $skin_thickness + $chip_length - $antenna_rail,
-            $skin_thickness + $antenna_offset + $antenna_radius,
-            $skin_thickness
-        ])
-        cube([
-            $antenna_rail,
-            $skin_thickness,
-            $rail_height / 2 + $antenna_radius
-        ]);
-        translate([
-            $skin_thickness + $chip_length - $antenna_rail,
-            $antenna_offset - $antenna_radius,
-            $skin_thickness
-        ])
-        cube([
-            $skin_thickness,
-            2 * $skin_thickness + 2 * $antenna_radius,
-            $rail_height / 2 - $antenna_radius
-        ]);
+        // antenna block
+        difference() {
+            translate([
+                $chip_length - $antenna_rail,
+                $skin_thickness + $chip_width / 2 - ($antenna_radius + $skin_thickness),
+                0
+            ])
+            roundedcube(
+                size = [
+                    $antenna_rail + $clasp_extra,
+                    2 * ($skin_thickness + $antenna_radius),
+                    $skin_thickness + $rail_height
+                ],
+                radius = 0.8,
+                xmin = true
+            );
+            // antenna hole & screw hole
+            union() {
+                translate([
+                    $skin_thickness + $chip_length - $antenna_rail - $extra,
+                    $skin_thickness + $chip_width / 2,
+                    $skin_thickness + $rail_height / 2
+                ])
+                rotate([0, 90, 0])
+                cylinder(h = $antenna_rail + 2 * $extra, r = $antenna_radius);
+                // screw hole
+                translate([
+                    $skin_thickness + $chip_length - $antenna_rail - $extra,
+                    $skin_thickness + $chip_width / 2,
+                    $skin_thickness + $chip_height - $clasp_offset
+                ])
+                rotate([0, 90, 0])
+                cylinder(h = $antenna_rail + $skin_thickness + 2 * $extra, r = $clasp_screw);
+            };
+        };
         // strap tubes
         for (offset_x = [0, 2 * $skin_thickness + $chip_length]) {
             for (offset_y = [0, 2 * $skin_thickness + $chip_width]) {
